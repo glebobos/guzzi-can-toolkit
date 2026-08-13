@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +45,13 @@ typedef struct {
 } guzzi_telemetry_t;
 
 extern guzzi_telemetry_t g_telemetry;
+
+#include "esp_err.h"
+
+/**
+ * Initializes DBC telemetry parser and mutex.
+ */
+esp_err_t guzzi_dbc_init(void);
 
 /**
  * Parses incoming CAN frame ID and 8-byte payload based on Moto Guzzi DBC rules.

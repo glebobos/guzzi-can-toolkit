@@ -1,16 +1,31 @@
 #include "guzzi_dbc.h"
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 #include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 guzzi_telemetry_t g_telemetry = {0};
+static SemaphoreHandle_t g_telemetry_mutex = NULL;
 
 static uint32_t get_time_ms(void) {
     return (uint32_t)(esp_timer_get_time() / 1000);
 }
 
+esp_err_t guzzi_dbc_init(void) {
+    if (g_telemetry_mutex == NULL) {
+        g_telemetry_mutex = xSemaphoreCreateMutex();
+    }
+    return (g_telemetry_mutex != NULL) ? ESP_OK : ESP_FAIL;
+}
+
 void guzzi_dbc_parse_frame(uint32_t can_id, const uint8_t *data, uint8_t dlc) {
     if (dlc < 8) return;
+
+    if (g_telemetry_mutex != NULL) {
+        xSemaphoreTake(g_telemetry_mutex, portMAX_DELAY);
+    }
 
     g_telemetry.last_update_ms = get_time_ms();
 
@@ -98,49 +113,62 @@ void guzzi_dbc_parse_frame(uint32_t can_id, const uint8_t *data, uint8_t dlc) {
         default:
             break;
     }
+
+    if (g_telemetry_mutex != NULL) {
+        xSemaphoreGive(g_telemetry_mutex);
+    }
 }
 
 int guzzi_telemetry_to_json(char *buf, size_t buf_len) {
+    guzzi_telemetry_t snap;
+    if (g_telemetry_mutex != NULL) {
+        xSemaphoreTake(g_telemetry_mutex, portMAX_DELAY);
+    }
+    snap = g_telemetry;
+    if (g_telemetry_mutex != NULL) {
+        xSemaphoreGive(g_telemetry_mutex);
+    }
+
     return snprintf(buf, buf_len,
         "{"
-        "\"rpm\":%u,"
+        "\"rpm\":%" PRIu16 ","
         "\"speed_kmh\":%.1f,"
-        "\"gear\":%u,"
-        "\"oil_temp_c\":%d,"
-        "\"coolant_temp_c\":%d,"
+        "\"gear\":%" PRIu8 ","
+        "\"oil_temp_c\":%" PRId16 ","
+        "\"coolant_temp_c\":%" PRId16 ","
         "\"battery_voltage\":%.1f,"
-        "\"odometer_km\":%lu,"
-        "\"fuel_range_km\":%u,"
-        "\"fuel_level_pct\":%u,"
-        "\"mgct_level\":%u,"
-        "\"abs_mode\":%u,"
-        "\"riding_mode\":%u,"
+        "\"odometer_km\":%" PRIu32 ","
+        "\"fuel_range_km\":%" PRIu16 ","
+        "\"fuel_level_pct\":%" PRIu8 ","
+        "\"mgct_level\":%" PRIu8 ","
+        "\"abs_mode\":%" PRIu8 ","
+        "\"riding_mode\":%" PRIu8 ","
         "\"front_brake_bar\":%.1f,"
         "\"accel_g\":%.2f,"
         "\"mil_active\":%s,"
         "\"warning_active\":%s,"
         "\"oil_alarm_active\":%s,"
         "\"service_wrench_active\":%s,"
-        "\"timestamp\":%lu"
+        "\"timestamp\":%" PRIu32
         "}",
-        g_telemetry.rpm,
-        g_telemetry.rear_speed_kmh,
-        g_telemetry.gear_position,
-        g_telemetry.oil_temp_c,
-        g_telemetry.coolant_temp_c,
-        g_telemetry.battery_voltage,
-        (unsigned long)g_telemetry.odometer_km,
-        g_telemetry.fuel_range_km,
-        g_telemetry.fuel_level_pct,
-        g_telemetry.traction_control,
-        g_telemetry.abs_map,
-        g_telemetry.engine_map,
-        g_telemetry.front_brake_bar,
-        g_telemetry.accel_g,
-        g_telemetry.mil_lamp ? "true" : "false",
-        g_telemetry.warning_lamp ? "true" : "false",
-        g_telemetry.oil_alarm ? "true" : "false",
-        g_telemetry.service_wrench ? "true" : "false",
-        (unsigned long)g_telemetry.last_update_ms
+        snap.rpm,
+        snap.rear_speed_kmh,
+        snap.gear_position,
+        snap.oil_temp_c,
+        snap.coolant_temp_c,
+        snap.battery_voltage,
+        snap.odometer_km,
+        snap.fuel_range_km,
+        snap.fuel_level_pct,
+        snap.traction_control,
+        snap.abs_map,
+        snap.engine_map,
+        snap.front_brake_bar,
+        snap.accel_g,
+        snap.mil_lamp ? "true" : "false",
+        snap.warning_lamp ? "true" : "false",
+        snap.oil_alarm ? "true" : "false",
+        snap.service_wrench ? "true" : "false",
+        snap.last_update_ms
     );
 }

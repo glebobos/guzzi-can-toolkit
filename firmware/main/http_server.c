@@ -16,7 +16,7 @@ static TaskHandle_t ws_broadcast_task_handle = NULL;
 
 // File handler for SPIFFS web assets
 static esp_err_t spiffs_file_handler(httpd_req_t *req) {
-    char filepath[64];
+    char filepath[600];
     const char *uri = req->uri;
 
     // Captive portal redirects
@@ -68,10 +68,13 @@ static esp_err_t spiffs_file_handler(httpd_req_t *req) {
         httpd_resp_set_type(req, "text/html");
     } else if (strstr(filepath, ".css")) {
         httpd_resp_set_type(req, "text/css");
+        httpd_resp_set_hdr(req, "Cache-Control", "public, max-age=86400");
     } else if (strstr(filepath, ".js")) {
         httpd_resp_set_type(req, "application/javascript");
+        httpd_resp_set_hdr(req, "Cache-Control", "public, max-age=86400");
     } else if (strstr(filepath, ".svg")) {
         httpd_resp_set_type(req, "image/svg+xml");
+        httpd_resp_set_hdr(req, "Cache-Control", "public, max-age=86400");
     }
 
     char chunk[1024];
@@ -138,20 +141,23 @@ static void ws_broadcast_task(void *pvParameters) {
 
         if (server == NULL) continue;
 
-        guzzi_telemetry_to_json(json_buf, sizeof(json_buf));
-
-        httpd_ws_frame_t ws_pkt;
-        memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
-        ws_pkt.payload = (uint8_t *)json_buf;
-        ws_pkt.len = strlen(json_buf);
-        ws_pkt.type = HTTPD_WS_TYPE_TEXT;
-
         size_t clients = 10;
         int client_fds[10];
+        bool formatted = false;
 
-        if (httpd_get_client_list(server, &clients, client_fds) == ESP_OK) {
+        if (httpd_get_client_list(server, &clients, client_fds) == ESP_OK && clients > 0) {
             for (size_t i = 0; i < clients; i++) {
                 if (httpd_ws_get_fd_info(server, client_fds[i]) == HTTPD_WS_CLIENT_WEBSOCKET) {
+                    if (!formatted) {
+                        guzzi_telemetry_to_json(json_buf, sizeof(json_buf));
+                        formatted = true;
+                    }
+                    httpd_ws_frame_t ws_pkt;
+                    memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+                    ws_pkt.payload = (uint8_t *)json_buf;
+                    ws_pkt.len = strlen(json_buf);
+                    ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+
                     httpd_ws_send_frame_async(server, client_fds[i], &ws_pkt);
                 }
             }
@@ -201,6 +207,10 @@ esp_err_t start_web_server(void) {
 }
 
 void stop_web_server(void) {
+    if (ws_broadcast_task_handle != NULL) {
+        vTaskDelete(ws_broadcast_task_handle);
+        ws_broadcast_task_handle = NULL;
+    }
     if (server) {
         httpd_stop(server);
         server = NULL;

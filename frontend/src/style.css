@@ -1,6 +1,7 @@
 :root {
-  --bg-dark: #0f172a;
-  --card-bg: #1e293b;
+  --bg-dark: #090d16;
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --card-border: rgba(255, 255, 255, 0.08);
   --accent-red: #ef4444;
   --accent-blue: #38bdf8;
   --accent-green: #22c55e;
@@ -17,7 +18,7 @@
 }
 
 body {
-  background-color: var(--bg-dark);
+  background: radial-gradient(circle at top right, #1e1b4b 0%, #090d16 60%);
   color: var(--text-main);
   padding: 16px;
   min-height: 100vh;
@@ -32,11 +33,26 @@ body {
   border-bottom: 2px solid var(--accent-red);
 }
 
+.brand {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.tricolor-bar {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(to right, #009246 33%, #ffffff 33% 66%, #ce2b37 66%);
+  margin-bottom: 4px;
+  border-radius: 2px;
+}
+
 .logo {
   font-size: 24px;
   font-weight: 900;
   color: var(--accent-red);
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
 }
 
 .sublogo {
@@ -49,15 +65,17 @@ body {
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  background-color: rgba(239, 68, 68, 0.2);
+  background-color: rgba(239, 68, 68, 0.15);
   color: var(--accent-red);
   border: 1px solid var(--accent-red);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
 }
 
 .status-badge.connected {
-  background-color: rgba(34, 197, 94, 0.2);
+  background-color: rgba(34, 197, 94, 0.15);
   color: var(--accent-green);
   border-color: var(--accent-green);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);
 }
 
 .dashboard {
@@ -68,8 +86,67 @@ body {
 
 .cluster-card, .actions-card, .logs-card {
   background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.warning-lamps {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: rgba(2, 6, 23, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.25;
+  transition: all 0.3s ease;
+}
+
+.lamp-icon {
+  font-size: 18px;
+}
+
+.lamp-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.lamp.active-mil {
+  opacity: 1;
+  color: #f59e0b;
+  filter: drop-shadow(0 0 6px #f59e0b);
+}
+
+.lamp.active-oil {
+  opacity: 1;
+  color: #ef4444;
+  filter: drop-shadow(0 0 8px #ef4444);
+}
+
+.lamp.active-wrench {
+  opacity: 1;
+  color: #38bdf8;
+  filter: drop-shadow(0 0 6px #38bdf8);
+}
+
+.lamp.active-warning {
+  opacity: 1;
+  color: #f97316;
+  filter: drop-shadow(0 0 6px #f97316);
 }
 
 .primary-gauges {
@@ -85,29 +162,32 @@ body {
 }
 
 .speedo-value {
-  font-size: 56px;
+  font-size: 64px;
   font-weight: 900;
   color: var(--text-main);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
 .speedo-unit {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-muted);
+  letter-spacing: 1px;
 }
 
 .gear-box {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
   background: #020617;
   border: 3px solid var(--accent-blue);
-  border-radius: 16px;
+  border-radius: 18px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 40px;
+  font-size: 44px;
   font-weight: 900;
   color: var(--accent-blue);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
 }
 
 .tacho-section {
@@ -118,33 +198,38 @@ body {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-muted);
   margin-bottom: 6px;
 }
 
 .tacho-bar-track {
-  height: 14px;
+  height: 16px;
   background: #020617;
-  border-radius: 7px;
+  border-radius: 8px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .tacho-bar-fill {
   height: 100%;
   width: 0%;
-  background: var(--accent-green);
-  transition: width 0.15s ease-out, background-color 0.15s ease-out;
+  background: linear-gradient(to right, var(--accent-green), var(--accent-yellow));
+  transition: width 0.15s ease-out, background 0.15s ease-out;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
 }
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 12px;
 }
 
 .metric-card {
   background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 14px;
   display: flex;
@@ -154,13 +239,14 @@ body {
 
 .card-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-muted);
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .card-val {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   margin-top: 6px;
 }
@@ -173,8 +259,10 @@ body {
 
 .actions-card h3, .logs-card h3 {
   font-size: 13px;
+  font-weight: 800;
   color: var(--text-muted);
   margin-bottom: 12px;
+  letter-spacing: 1px;
 }
 
 .button-row {
@@ -193,15 +281,23 @@ body {
   font-weight: 700;
   cursor: pointer;
   color: white;
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
 }
 
 .btn:active {
   transform: scale(0.98);
 }
 
-.btn-warning { background: var(--accent-yellow); color: black; }
-.btn-danger { background: var(--accent-red); }
+.btn-warning {
+  background: var(--accent-yellow);
+  color: black;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+.btn-danger {
+  background: var(--accent-red);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
 
 .feedback-msg {
   margin-top: 10px;
@@ -219,4 +315,5 @@ body {
   color: #86efac;
   max-height: 140px;
   overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }

@@ -27,6 +27,7 @@ static void dns_server_task(void *pvParameters) {
     dns_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
     if (dns_socket < 0) {
         ESP_LOGE(TAG, "Failed to create DNS socket");
+        dns_task_handle = NULL;
         vTaskDelete(NULL);
         return;
     }
@@ -40,14 +41,19 @@ static void dns_server_task(void *pvParameters) {
         ESP_LOGE(TAG, "Failed to bind DNS socket");
         close(dns_socket);
         dns_socket = -1;
+        dns_task_handle = NULL;
         vTaskDelete(NULL);
         return;
     }
 
     ESP_LOGI(TAG, "DNS Captive Portal Server started on port 53");
 
-    while (1) {
+    while (dns_socket >= 0) {
         int len = recvfrom(dns_socket, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &client_addr_len);
+        if (len < 0) {
+            ESP_LOGI(TAG, "DNS socket closed or error, exiting task loop");
+            break;
+        }
         if (len < (int)sizeof(dns_header_t)) continue;
 
         dns_header_t *header = (dns_header_t *)buffer;
@@ -55,10 +61,16 @@ static void dns_server_task(void *pvParameters) {
         header->an_count = header->qd_count; // Answer count = Query count
 
         int ptr = sizeof(dns_header_t);
-        // Skip query name
+        // Safe query name skipping with bounds check
         while (ptr < len && buffer[ptr] != 0) {
-            ptr += buffer[ptr] + 1;
+            uint8_t label_len = buffer[ptr];
+            if (ptr + 1 + label_len >= len) {
+                break;
+            }
+            ptr += label_len + 1;
         }
+        
+        if (ptr + 5 > len) continue; // Skip if header/query is malformed
         ptr += 5; // Skip null byte, QTYPE, and QCLASS
 
         if (ptr + 16 <= (int)sizeof(buffer)) {
@@ -83,6 +95,9 @@ static void dns_server_task(void *pvParameters) {
             sendto(dns_socket, buffer, ptr, 0, (struct sockaddr *)&client_addr, client_addr_len);
         }
     }
+
+    dns_task_handle = NULL;
+    vTaskDelete(NULL);
 }
 
 esp_err_t start_dns_server(void) {
@@ -94,11 +109,9 @@ esp_err_t start_dns_server(void) {
 
 void stop_dns_server(void) {
     if (dns_socket >= 0) {
-        close(dns_socket);
+        int sock = dns_socket;
         dns_socket = -1;
-    }
-    if (dns_task_handle != NULL) {
-        vTaskDelete(dns_task_handle);
-        dns_task_handle = NULL;
+        shutdown(sock, SHUT_RDWR);
+        close(sock);
     }
 }

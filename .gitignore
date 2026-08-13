@@ -1,69 +1,35 @@
-# Prerequisites
-*.d
+# ESP-IDF & Build Artifacts
+build/
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/spiffs_image/*
+!firmware/spiffs_image/.gitkeep
+
+# Node & Frontend Build Output
+frontend/node_modules/
+frontend/dist/
+*.gz
 
 # Compiled Object files
-*.slo
-*.lo
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
 *.so
 *.dylib
 *.dll
-*.so.*
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# Build directories
-build/
-Build/
-build-*/
 
 # CMake generated files
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
-install_manifest.txt
 compile_commands.json
 
-# Temporary files
+# Temporary files & logs
 *.tmp
 *.log
 *.bak
 *.swp
-
-# vcpkg
-vcpkg_installed/
-
-# debug information files
-*.dwo
-
-# test output & cache
-Testing/
+.DS_Store
 .cache/

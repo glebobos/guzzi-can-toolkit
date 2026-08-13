@@ -3,6 +3,7 @@
 #include "nvs_flash.h"
 #include "wifi_ap.h"
 #include "http_server.h"
+#include "guzzi_dbc.h"
 #include "can_twai.h"
 
 static const char *TAG = "MAIN";
@@ -21,7 +22,10 @@ void app_main(void) {
     }
     ESP_ERROR_CHECK(ret);
 
-    // 2. Initialize Wi-Fi SoftAP & Captive Portal
+    // 2. Initialize Telemetry DBC Mutex
+    ESP_ERROR_CHECK(guzzi_dbc_init());
+
+    // 3. Initialize Wi-Fi SoftAP & Captive Portal
     ESP_LOGI(TAG, "Starting Wi-Fi Access Point...");
     wifi_init_softap();
 

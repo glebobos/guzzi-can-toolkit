@@ -21,6 +21,9 @@ interface TelemetryData {
 }
 
 let ws: WebSocket | null = null;
+let reconnectTimer: number | null = null;
+const logHistory: string[] = [];
+const MAX_LOG_LINES = 25;
 
 function initApp() {
   const statusBadge = document.getElementById('conn-status')!;
@@ -37,17 +40,36 @@ function initApp() {
   const logConsole = document.getElementById('log-console')!;
   const actionFeedback = document.getElementById('action-feedback')!;
 
+  const lampMil = document.getElementById('lamp-mil')!;
+  const lampOil = document.getElementById('lamp-oil')!;
+  const lampWrench = document.getElementById('lamp-wrench')!;
+  const lampWarning = document.getElementById('lamp-warning')!;
+
   const btnServiceReset = document.getElementById('btn-service-reset') as HTMLButtonElement;
   const btnClearDtc = document.getElementById('btn-clear-dtc') as HTMLButtonElement;
 
+  function appendLog(line: string) {
+    logHistory.unshift(line);
+    if (logHistory.length > MAX_LOG_LINES) {
+      logHistory.pop();
+    }
+    logConsole.textContent = logHistory.join('\n');
+  }
+
   function connectWebSocket() {
-    const wsUrl = `ws://${window.location.host}/ws`;
+    if (reconnectTimer !== null) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       statusBadge.textContent = 'CONNECTED';
       statusBadge.classList.add('connected');
-      logConsole.textContent = '[WS] Connected to ESP32 CAN Telemetry Stream.\n';
+      appendLog('[WS] Connected to ESP32 CAN Telemetry Stream.');
     };
 
     ws.onmessage = (event) => {
@@ -63,12 +85,18 @@ function initApp() {
         const pct = Math.min(100, Math.max(0, (data.rpm / 8000) * 100));
         tachoFill.style.width = `${pct}%`;
         if (data.rpm > 6500) {
-          tachoFill.style.backgroundColor = '#ef4444';
+          tachoFill.style.background = '#ef4444';
         } else if (data.rpm > 4500) {
-          tachoFill.style.backgroundColor = '#f59e0b';
+          tachoFill.style.background = '#f59e0b';
         } else {
-          tachoFill.style.backgroundColor = '#22c55e';
+          tachoFill.style.background = 'linear-gradient(to right, #22c55e, #f59e0b)';
         }
+
+        // Warning Lamps
+        lampMil.classList.toggle('active-mil', Boolean(data.mil_active));
+        lampOil.classList.toggle('active-oil', Boolean(data.oil_alarm_active));
+        lampWrench.classList.toggle('active-wrench', Boolean(data.service_wrench_active));
+        lampWarning.classList.toggle('active-warning', Boolean(data.warning_active));
 
         // Metrics
         valOil.textContent = `${data.oil_temp_c} °C`;
@@ -78,8 +106,8 @@ function initApp() {
         valMgct.textContent = `Level ${data.mgct_level}`;
         valAbs.textContent = `Map ${data.abs_mode}`;
 
-        // Stream Log
-        logConsole.textContent = `[${new Date().toLocaleTimeString()}] RPM: ${data.rpm} | Speed: ${data.speed_kmh.toFixed(1)} km/h | Gear: ${data.gear} | Coolant: ${data.coolant_temp_c}°C | Battery: ${data.battery_voltage.toFixed(1)}V\n` + logConsole.textContent;
+        // Stream Log (Capped Buffer)
+        appendLog(`[${new Date().toLocaleTimeString()}] RPM: ${data.rpm} | Speed: ${data.speed_kmh.toFixed(1)} km/h | Gear: ${data.gear} | Coolant: ${data.coolant_temp_c}°C | Battery: ${data.battery_voltage.toFixed(1)}V`);
       } catch (err) {
         console.error('Failed to parse WebSocket JSON payload', err);
       }
@@ -88,7 +116,9 @@ function initApp() {
     ws.onclose = () => {
       statusBadge.textContent = 'DISCONNECTED';
       statusBadge.classList.remove('connected');
-      setTimeout(connectWebSocket, 2000); // Auto reconnect
+      if (reconnectTimer === null) {
+        reconnectTimer = window.setTimeout(connectWebSocket, 2000);
+      }
     };
   }
 

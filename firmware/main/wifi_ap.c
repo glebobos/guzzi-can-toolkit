@@ -5,6 +5,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
+#include "lwip/ip_addr.h"
 
 static const char *TAG = "WIFI_AP";
 

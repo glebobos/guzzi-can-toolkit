@@ -11,6 +11,7 @@
     <!-- Header -->
     <header class="header">
       <div class="brand">
+        <div class="tricolor-bar"></div>
         <h1 class="logo">MOTO GUZZI</h1>
         <span class="sublogo">CAN Diagnostic & Telemetry Toolkit</span>
       </div>
@@ -20,6 +21,26 @@
     <!-- Cockpit Display -->
     <main class="dashboard">
       <section class="cluster-card">
+        <!-- Warning Lamps Cluster -->
+        <div class="warning-lamps">
+          <div class="lamp" id="lamp-mil" title="Check Engine MIL">
+            <span class="lamp-icon">⚡</span>
+            <span class="lamp-label">CHECK ENGINE</span>
+          </div>
+          <div class="lamp" id="lamp-oil" title="Oil Pressure Alarm">
+            <span class="lamp-icon">🛢️</span>
+            <span class="lamp-label">OIL PRESSURE</span>
+          </div>
+          <div class="lamp" id="lamp-wrench" title="Urgent Service Wrench">
+            <span class="lamp-icon">🔧</span>
+            <span class="lamp-label">SERVICE</span>
+          </div>
+          <div class="lamp" id="lamp-warning" title="General Warning">
+            <span class="lamp-icon">⚠️</span>
+            <span class="lamp-label">WARNING</span>
+          </div>
+        </div>
+
         <div class="primary-gauges">
           <div class="speedo-box">
             <span class="speedo-value" id="val-speed">0</span>

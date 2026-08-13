@@ -124,16 +124,18 @@ case "$CMD" in
     ;;
     
   build-firmware)
-    log_info "Compiling ESP-IDF Moto Guzzi CAN firmware..."
+    log_info "Compiling ESP-IDF firmware..."
+    export BUILDKIT_PROGRESS=plain
     run_cmd docker compose up --build firmware-builder
-    log_success "Firmware compiled successfully."
+    log_success "Firmware compiled and SPIFFS partition image created."
     ;;
     
   build)
-    log_info "Executing full compilation (Frontend + Firmware)..."
+    log_info "Executing full project compilation..."
+    export BUILDKIT_PROGRESS=plain
     run_cmd docker compose up --build frontend-builder
     run_cmd docker compose up --build firmware-builder
-    log_success "All build targets compiled successfully."
+    log_success "All modules compiled successfully."
     ;;
     
   flash)
