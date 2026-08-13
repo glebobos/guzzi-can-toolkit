@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moto Guzzi CAN Toolkit</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <h1 class="logo">MOTO GUZZI</h1>
+        <span class="sublogo">CAN Diagnostic & Telemetry Toolkit</span>
+      </div>
+      <div class="status-badge" id="conn-status">DISCONNECTED</div>
+    </header>
+
+    <!-- Cockpit Display -->
+    <main class="dashboard">
+      <section class="cluster-card">
+        <div class="primary-gauges">
+          <div class="speedo-box">
+            <span class="speedo-value" id="val-speed">0</span>
+            <span class="speedo-unit">KM/H</span>
+          </div>
+          <div class="gear-box" id="val-gear">N</div>
+        </div>
+
+        <div class="tacho-section">
+          <div class="tacho-header">
+            <span>ENGINE TACHOMETER</span>
+            <span class="rpm-value" id="val-rpm">0 RPM</span>
+          </div>
+          <div class="tacho-bar-track">
+            <div class="tacho-bar-fill" id="tacho-fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Metrics Grid -->
+      <section class="grid-container">
+        <div class="metric-card">
+          <span class="card-label">OIL TEMP</span>
+          <span class="card-val oil" id="val-oil">-- °C</span>
+        </div>
+        <div class="metric-card">
+          <span class="card-label">COOLANT TEMP</span>
+          <span class="card-val coolant" id="val-coolant">-- °C</span>
+        </div>
+        <div class="metric-card">
+          <span class="card-label">BATTERY</span>
+          <span class="card-val battery" id="val-battery">-- V</span>
+        </div>
+        <div class="metric-card">
+          <span class="card-label">ODOMETER</span>
+          <span class="card-val" id="val-odo">-- km</span>
+        </div>
+        <div class="metric-card">
+          <span class="card-label">TRACTION (MGCT)</span>
+          <span class="card-val mgct" id="val-mgct">--</span>
+        </div>
+        <div class="metric-card">
+          <span class="card-label">ABS MAP</span>
+          <span class="card-val abs" id="val-abs">--</span>
+        </div>
+      </section>
+
+      <!-- Action Panel -->
+      <section class="actions-card">
+        <h3>DIAGNOSTIC CONTROLS</h3>
+        <div class="button-row">
+          <button class="btn btn-warning" id="btn-service-reset">
+            🔧 Reset Service Wrench (0x720)
+          </button>
+          <button class="btn btn-danger" id="btn-clear-dtc">
+            ⚠️ Clear Engine DTCs (0x7E0)
+          </button>
+        </div>
+        <div class="feedback-msg" id="action-feedback"></div>
+      </section>
+
+      <!-- Live Stream -->
+      <section class="logs-card">
+        <h3>LIVE WEBSOCKET CAN STREAM</h3>
+        <pre class="log-console" id="log-console">Waiting for CAN telemetry frames...</pre>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

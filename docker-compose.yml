@@ -1,0 +1,20 @@
+services:
+  frontend-builder:
+    image: guzzi-can-frontend
+    network_mode: host
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    volumes:
+      - ./firmware/spiffs_image:/app/dist
+
+  firmware-builder:
+    image: guzzi-can-idf
+    network_mode: host
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.idf
+    volumes:
+      - ./firmware:/project
+    working_dir: /project
+    command: idf.py build
