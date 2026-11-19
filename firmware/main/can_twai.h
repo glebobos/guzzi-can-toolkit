@@ -18,15 +18,45 @@ extern "C" {
 esp_err_t guzzi_can_init(void);
 
 /**
- * Executes active UDS Diagnostic Service Reset on Dashboard ECU (0x720).
- * Clears the service wrench / key light on the TFT cluster.
+ * Calculates genuine Magneti Marelli UDS SecurityAccess Key from a 4-byte Seed
+ * using the Marelli Wichmann-Hill PRNG / Schrage algorithm with constants 0x1759 and 0x1215.
  */
-esp_err_t guzzi_can_reset_service_wrench(void);
+void guzzi_marelli_calc_key(const uint8_t seed[4], uint8_t key[4]);
+
+/**
+ * Executes active UDS Diagnostic Service Reset on COBO Dashboard (0x7A0)
+ * and Marelli 11MP Engine ECU (0x7E0).
+ * Writes a full JSON report of sent frames and captured replies into `out_json`.
+ */
+esp_err_t guzzi_can_reset_service_wrench(char *out_json, size_t out_len);
 
 /**
  * Executes active UDS Clear Fault Codes (DTCs) on Engine ECU (0x7E0).
  */
 esp_err_t guzzi_can_clear_ecu_dtc(void);
+
+/**
+ * Read-only connectivity test: sends OBD Mode 01 PID 00 and UDS TesterPresent to
+ * ECU/Dash targets, reports whether each frame was ACKed and lists any diagnostic replies.
+ * Writes a JSON report into `out`.
+ */
+esp_err_t guzzi_can_ping(char *out, size_t out_len);
+esp_err_t guzzi_can_probe_dash(char *out, size_t out_len);
+esp_err_t guzzi_can_test_security_key(int cand_idx, const char *custom_key_hex, char *out, size_t out_len);
+
+/**
+ * Full bus diagnostic scanner: sweeps standard 11-bit diagnostic IDs (0x700 - 0x7EF)
+ * and key 29-bit UDS targets to discover all active ECUs and Dashboards on the motorcycle.
+ * Writes a JSON report into `out`.
+ */
+esp_err_t guzzi_can_scan_bus(char *out, size_t out_len);
+
+/**
+ * Hardware test: holds CTX LOW (static dominant) for hold_ms so the transceiver's differential
+ * drive can be measured with a multimeter. Refuses to run while the bus is active (ignition ON).
+ */
+esp_err_t guzzi_can_dominant_test(uint32_t hold_ms);
+esp_err_t guzzi_can_toggle_test(uint32_t total_ms);
 
 #ifdef __cplusplus
 }
